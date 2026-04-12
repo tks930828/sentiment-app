@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -28,7 +29,7 @@ def train_model(df):
 model, vectorizer, X_test, y_test = train_model(df)
 
 # UI
-st.title("sentiment")
+st.title("感情スコア")
 
 # 評価
 y_pred = model.predict(X_test)
@@ -45,10 +46,30 @@ if st.button("分析"):
     prediction = model.predict(input_vec)
     proba = model.predict_proba(input_vec)[0]
 
-    if prediction[0] == 1:
-        st.write("😊 ポジティブ")
-    else:
-        st.write("😡 ネガティブ")
+    #横並びレイアウト
+    col1, col2 = st.columns([1.2, 1])
 
-    st.write(f"ポジティブ: {proba[1]*100:.1f}%")
-    st.write(f"ネガティブ: {proba[0]*100:.1f}%")
+    #左側：結果表示
+    with col1:
+        if prediction[0] == 1:
+            st.success(f"😊 ポジティブ{proba[1]*100:.1f}%")
+        else:
+            st.error(f"😡 ネガティブ{proba[0]*100:.1f}%")
+
+    #右側：グラフ表示
+    with col2:
+        fig, ax = plt.subplots(figsize=(3, 2))
+
+        labels = ["Positive","Negative"]
+        values = [proba[1], proba[0]]
+
+        ax.barh(labels, values) #横棒グラフ
+        ax.set_xlim(0, 1)
+        ax.set_title("Sentiment Score")
+
+        #%表示
+        for i, v in enumerate(values):
+            ax.text(v, i, f"{v*100:.0f}%", va='center')
+        
+        plt.tight_layout()
+        st.pyplot(fig)

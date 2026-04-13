@@ -46,30 +46,37 @@ if st.button("分析"):
     prediction = model.predict(input_vec)
     proba = model.predict_proba(input_vec)[0]
 
-    #横並びレイアウト
     col1, col2 = st.columns([1.2, 1])
 
-    #左側：結果表示
+    # 左：結果
     with col1:
         if prediction[0] == 1:
-            st.success(f"😊 ポジティブ{proba[1]*100:.1f}%")
+            st.success(f"😊 ポジティブ {proba[1]*100:.1f}%")
         else:
-            st.error(f"😡 ネガティブ{proba[0]*100:.1f}%")
+            st.error(f"😡 ネガティブ {proba[0]*100:.1f}%")
 
-    #右側：グラフ表示
+    # 右：グラフ
     with col2:
         fig, ax = plt.subplots(figsize=(3, 2))
 
-        labels = ["Positive","Negative"]
+        labels = ["Positive", "Negative"]
         values = [proba[1], proba[0]]
 
-        ax.barh(labels, values) #横棒グラフ
+        ax.barh(labels, values)
         ax.set_xlim(0, 1)
         ax.set_title("Sentiment Score")
 
-        #%表示
         for i, v in enumerate(values):
             ax.text(v, i, f"{v*100:.0f}%", va='center')
-        
+
         plt.tight_layout()
         st.pyplot(fig)
+
+    # 下：詳細スコア
+    st.markdown("### 詳細スコア")
+
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.metric("ポジティブ", f"{proba[1]*100:.1f}%")
+    with col_b:
+        st.metric("ネガティブ", f"{proba[0]*100:.1f}%")

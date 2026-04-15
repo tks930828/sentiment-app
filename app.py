@@ -28,34 +28,29 @@ def train_model(df):
 
 model, vectorizer, X_test, y_test = train_model(df)
 
-# UI
-st.title("感情スコア")
+# タイトル
+st.title("感情分析アプリ")
 
-# 評価
-y_pred = model.predict(X_test)
-
-st.write("Accuracy:", accuracy_score(y_test, y_pred))
-st.write("Precision:", precision_score(y_test, y_pred))
-st.write("Recall:", recall_score(y_test, y_pred))
-st.write("F1:", f1_score(y_test, y_pred))
-
+# 入力
 text = st.text_input("文章を入力してください")
 
+# 分析
 if st.button("分析"):
     input_vec = vectorizer.transform([text])
     prediction = model.predict(input_vec)
     proba = model.predict_proba(input_vec)[0]
 
+    st.markdown("---")  # 区切り線
+
+    # ■ 結果エリア
     col1, col2 = st.columns([1.2, 1])
 
-    # 左：結果
     with col1:
         if prediction[0] == 1:
             st.success(f"😊 ポジティブ {proba[1]*100:.1f}%")
         else:
             st.error(f"😡 ネガティブ {proba[0]*100:.1f}%")
 
-    # 右：グラフ
     with col2:
         fig, ax = plt.subplots(figsize=(3, 2))
 
@@ -64,7 +59,6 @@ if st.button("分析"):
 
         ax.barh(labels, values)
         ax.set_xlim(0, 1)
-        ax.set_title("Sentiment Score")
 
         for i, v in enumerate(values):
             ax.text(v, i, f"{v*100:.0f}%", va='center')
@@ -72,11 +66,18 @@ if st.button("分析"):
         plt.tight_layout()
         st.pyplot(fig)
 
-    # 下：詳細スコア
-    st.markdown("### 詳細スコア")
+    # ■ 詳細（折りたたみ）
+    with st.expander("詳細を見る"):
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.metric("ポジティブ", f"{proba[1]*100:.1f}%")
+        with col_b:
+            st.metric("ネガティブ", f"{proba[0]*100:.1f}%")
 
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.metric("ポジティブ", f"{proba[1]*100:.1f}%")
-    with col_b:
-        st.metric("ネガティブ", f"{proba[0]*100:.1f}%")
+        st.markdown("#### モデル評価")
+        y_pred = model.predict(X_test)
+
+        st.write("Accuracy:", accuracy_score(y_test, y_pred))
+        st.write("Precision:", precision_score(y_test, y_pred))
+        st.write("Recall:", recall_score(y_test, y_pred))
+        st.write("F1:", f1_score(y_test, y_pred))

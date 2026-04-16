@@ -28,31 +28,49 @@ def train_model(df):
 
 model, vectorizer, X_test, y_test = train_model(df)
 
-# タイトル
-st.title("感情分析アプリ")
+# ページ設定
+st.set_page_config(page_title="感情分析", layout="centered")
 
-# 入力
-text = st.text_input("文章を入力してください")
+# タイトル（中央寄せ）
+st.markdown("<h1 style='text-align: center;'>感情分析アプリ</h1>", unsafe_allow_html=True)
 
-# 分析
-if st.button("分析"):
+# 余白
+st.write("")
+
+# 入力エリア（中央っぽくする）
+col_center = st.columns([1, 2, 1])[1]
+
+with col_center:
+    text = st.text_input("文章を入力してください")
+    analyze = st.button("分析")
+
+# 実行
+if analyze:
     input_vec = vectorizer.transform([text])
     prediction = model.predict(input_vec)
     proba = model.predict_proba(input_vec)[0]
 
-    st.markdown("---")  # 区切り線
+    # カード風コンテナ
+    st.markdown("---")
 
-    # ■ 結果エリア
-    col1, col2 = st.columns([1.2, 1])
+    result_col = st.columns([1, 2, 1])[1]
 
-    with col1:
+    with result_col:
+
+        # 結果表示（中央）
         if prediction[0] == 1:
-            st.success(f"😊 ポジティブ {proba[1]*100:.1f}%")
+            st.markdown(
+                f"<h2 style='text-align: center; color: green;'>😊 ポジティブ {proba[1]*100:.1f}%</h2>",
+                unsafe_allow_html=True
+            )
         else:
-            st.error(f"😡 ネガティブ {proba[0]*100:.1f}%")
+            st.markdown(
+                f"<h2 style='text-align: center; color: red;'>😡 ネガティブ {proba[0]*100:.1f}%</h2>",
+                unsafe_allow_html=True
+            )
 
-    with col2:
-        fig, ax = plt.subplots(figsize=(3, 2))
+        # グラフ
+        fig, ax = plt.subplots(figsize=(4, 2))
 
         labels = ["Positive", "Negative"]
         values = [proba[1], proba[0]]
@@ -66,18 +84,10 @@ if st.button("分析"):
         plt.tight_layout()
         st.pyplot(fig)
 
-    # ■ 詳細（折りたたみ）
-    with st.expander("詳細を見る"):
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.metric("ポジティブ", f"{proba[1]*100:.1f}%")
-        with col_b:
-            st.metric("ネガティブ", f"{proba[0]*100:.1f}%")
-
-        st.markdown("#### モデル評価")
-        y_pred = model.predict(X_test)
-
-        st.write("Accuracy:", accuracy_score(y_test, y_pred))
-        st.write("Precision:", precision_score(y_test, y_pred))
-        st.write("Recall:", recall_score(y_test, y_pred))
-        st.write("F1:", f1_score(y_test, y_pred))
+        # 詳細（折りたたみ）
+        with st.expander("詳細"):
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.metric("ポジティブ", f"{proba[1]*100:.1f}%")
+            with col_b:
+                st.metric("ネガティブ", f"{proba[0]*100:.1f}%")

@@ -17,27 +17,31 @@ def train_model(df):
         df["text"], y, test_size=0.2, random_state=42
     )
 
-    vectorizer = TfidfVectorizer()
+    vectorizer = TfidfVectorizer(
+        lowercase=True,
+        stop_words="english"
+    )
+
     X_train = vectorizer.fit_transform(X_train_text)
     X_test = vectorizer.transform(X_test_text)
 
-    model = LogisticRegression()
+    model = LogisticRegression(max_iter=1000)
     model.fit(X_train, y_train)
 
     return model, vectorizer, X_test, y_test
 
 model, vectorizer, X_test, y_test = train_model(df)
 
+# 評価（1回だけ）
+y_pred = model.predict(X_test)
+
 # ページ設定
 st.set_page_config(page_title="感情分析", layout="centered")
 
-# タイトル（中央寄せ）
+# タイトル
 st.markdown("<h1 style='text-align: center;'>感情分析アプリ</h1>", unsafe_allow_html=True)
 
-# 余白
-st.write("")
-
-# 入力エリア（中央っぽくする）
+# 入力
 col_center = st.columns([1, 2, 1])[1]
 
 with col_center:
@@ -45,19 +49,16 @@ with col_center:
     analyze = st.button("分析")
 
 # 実行
-if analyze:
+if analyze and text:
     input_vec = vectorizer.transform([text])
     prediction = model.predict(input_vec)
     proba = model.predict_proba(input_vec)[0]
 
-    # カード風コンテナ
     st.markdown("---")
 
     result_col = st.columns([1, 2, 1])[1]
 
     with result_col:
-
-        # 結果表示（中央）
         if prediction[0] == 1:
             st.markdown(
                 f"<h2 style='text-align: center; color: green;'>😊 ポジティブ {proba[1]*100:.1f}%</h2>",
@@ -69,7 +70,6 @@ if analyze:
                 unsafe_allow_html=True
             )
 
-        # グラフ
         fig, ax = plt.subplots(figsize=(4, 2))
 
         labels = ["Positive", "Negative"]
@@ -84,10 +84,15 @@ if analyze:
         plt.tight_layout()
         st.pyplot(fig)
 
-        # 詳細（折りたたみ）
         with st.expander("詳細"):
             col_a, col_b = st.columns(2)
             with col_a:
                 st.metric("ポジティブ", f"{proba[1]*100:.1f}%")
             with col_b:
                 st.metric("ネガティブ", f"{proba[0]*100:.1f}%")
+
+        with st.expander("モデル評価"):
+            st.write("Accuracy:", accuracy_score(y_test, y_pred))
+            st.write("Precision:", precision_score(y_test, y_pred))
+            st.write("Recall:", recall_score(y_test, y_pred))
+            st.write("F1:", f1_score(y_test, y_pred))
